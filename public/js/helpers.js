@@ -26,3 +26,16 @@ function showEvents(events) {
     });
     document.querySelector('#eventtable table tbody').innerHTML = markup;
 }
+
+async function fetchData() {
+    try {
+      const data = await fetch("/api/events");
+      const response = await data.json();
+      showEvents(response);
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  
+  document.addEventListener("DOMContentLoaded", fetchData);

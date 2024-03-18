@@ -77,9 +77,31 @@
         </div>
     </div>
     <script>
-        fetch('api/events')
-            .then(response => response.json())
+        fetch('api/events-brittle')
+            .then(response => {
+                if (response.status !== 200) {
+                    showError('Something went wrong.');
+                }
+                return response.json();
+            })
             .then(events => showEvents(events));
+
+        function addToCart(id, quantity) {
+            fetch('api/cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: id, quantity: quantity})
+            })
+                .then(response => {
+                    if (response.status === 200) {
+                        fetch('api/cart')
+                            .then(response => response.json())
+                            .then(cart => updateCart(cart));
+                    }
+                });
+        }
     </script>
   </body>
 </html>

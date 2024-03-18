@@ -30,3 +30,15 @@ code {
 .max-100 {
     max-height: 100px;
 }
+
+.img-container {
+    position: relative;
+    text-align: center;
+    color: white;
+}
+
+.img-progress {
+    position: absolute;
+    top: 40%;
+    left: 40%;
+}

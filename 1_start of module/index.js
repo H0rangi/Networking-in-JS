@@ -38,7 +38,7 @@ app.get('/api/events', (req, res) => {
             'application/json': () => { res.type('json'); res.send(rows); },
             'text/xml': () => { res.type('xml'); res.send(xml.js2xml(rows, { compact: true })); }
         });
-        //res.send(rows);
+        res.send(rows);
     });
 });
 
@@ -100,8 +100,8 @@ app.get('/api/cover/:id', (req, res) => {
                         const data = 'data:img/png;base64,' + img.toString('base64');
                         res.set({ 'Content-Length': data.length });
                         res.send(data);
-                        //res.type('png');
-                        //res.sendFile(`public/img/${row.imgUrl}`, { root: __dirname });
+                        res.type('png');
+                        res.sendFile(`public/img/${row.imgUrl}`, { root: __dirname });
                     }, parseInt(5000 * Math.random()));
                 } else {
                     res.status(404).end();

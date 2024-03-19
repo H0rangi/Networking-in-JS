@@ -79,7 +79,9 @@
     <script>
         fetch('api/events')
             .then(response => response.json())
-            .then(events => showEvents(events));
+            .then(events => {
+                console.log(events);
+                showEvents(events)});
 
         
     </script>

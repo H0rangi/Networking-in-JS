@@ -1,15 +1,24 @@
 const express = require('express');
 const app = express();
+const ws = require('ws');
 const port = 3000;
+const secret = 'Gl0b0t1ck€t';
+
+const httpServer = require('http').createServer();
+const wss = new ws.Server({ server: httpServer });
 
 const fs = require('fs');
 
+const cookie = require('cookie');
+const cookieParser = require('cookie-parser');
+
 const session = require('express-session');
-app.use(session({
-    secret: 'Gl0b0t1ck€t',
+const sessionParser = session({
+    secret: secret,
     resave: false,
     saveUninitialized: true 
-}));
+});
+app.use(sessionParser);
 
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
@@ -51,6 +60,13 @@ app.get('/api/events-brittle', (req, res) => {
     }
 });
 
+app.get('/api/events-slow', (req, res) => {
+    setTimeout((() => {
+        req.url = '/api/events';
+        return app._router.handle(req, res);
+      }), Math.round(2000 * Math.random()));
+});
+
 app.get('/api/cart', (req, res) => {
     if (req.session.id) {
         let sql = 'SELECT cartitem.*, event.artist, event.name, event.date, event.price, event.imgUrl FROM cartitem INNER JOIN event ON cartitem.event_id = event.id WHERE uuid = ?';
@@ -79,7 +95,20 @@ app.post('/api/cart', jsonParser, (req, res) => {
                     sql,
                     [req.session.id, req.body.id],
                     (err) => {
-                        res.sendStatus(200).end();
+                        sql = 'SELECT SUM(quantity) as count FROM cartitem WHERE uuid = ?';
+                        db.get(
+                            sql,
+                            [req.session.id],
+                            (err, row) => {
+                                wss.clients.forEach((client) => {
+                                    if (client.sid === req.session.id && 
+                                        client.readyState === ws.WebSocket.OPEN) {
+                                        client.send(JSON.stringify([{ quantity: row['count'] }]));
+                                    }
+                                })
+                                res.sendStatus(200).end();        
+                            }
+                        )
                     });
             });
     } else {
@@ -100,8 +129,8 @@ app.get('/api/cover/:id', (req, res) => {
                         const data = 'data:img/png;base64,' + img.toString('base64');
                         res.set({ 'Content-Length': data.length });
                         res.send(data);
-                        res.type('png');
-                        res.sendFile(`public/img/${row.imgUrl}`, { root: __dirname });
+                        //res.type('png');
+                        //res.sendFile(`public/img/${row.imgUrl}`, { root: __dirname });
                     }, parseInt(5000 * Math.random()));
                 } else {
                     res.status(404).end();
@@ -110,6 +139,17 @@ app.get('/api/cover/:id', (req, res) => {
     }
 });
 
-app.listen(port, () => {
-  console.log(`Globoticket app listening on port ${port}`);
+httpServer.on('request', app);
+
+wss.on('connection', function connection(conn, req) {
+    const cookies = cookie.parse(req.headers.cookie);
+    const sid = cookieParser.signedCookie(cookies['connect.sid'], secret);
+    conn.sid = sid;
+    conn.on('message', function incoming(message) {      
+      conn.send(`Copy: ${message}`);
+    });
+  });
+
+httpServer.listen(port, () => {
+    console.log(`Globoticket app listening on port ${port}`);
 });

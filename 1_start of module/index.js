@@ -38,7 +38,7 @@ app.get('/api/events', (req, res) => {
             'application/json': () => { res.type('json'); res.send(rows); },
             'text/xml': () => { res.type('xml'); res.send(xml.js2xml(rows, { compact: true })); }
         });
-        res.send(rows);
+        //res.send(rows);
     });
 });
 
